@@ -105,6 +105,7 @@ LOCAL_STATIC_LIBRARIES := \
 
 # Create symlinks
 LOCAL_POST_INSTALL_CMD := $(hide) mkdir -p $(TARGET_ROOT_OUT)/sbin; \
+    ln -sf ../init $(TARGET_ROOT_OUT)/sbin/modprobe; \
     ln -sf ../init $(TARGET_ROOT_OUT)/sbin/ueventd; \
     ln -sf ../init $(TARGET_ROOT_OUT)/sbin/watchdogd
 

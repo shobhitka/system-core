@@ -98,6 +98,7 @@ LOCAL_SRC_FILES := $(libcutils_common_sources) \
         debugger.c \
         klog.c \
         partition_utils.c \
+        probe_module.c \
         properties.c \
         qtaguid.c \
         trace-dev.c \

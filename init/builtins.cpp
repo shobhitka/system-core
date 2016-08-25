@@ -29,7 +29,6 @@
 #include <sys/socket.h>
 #include <sys/mount.h>
 #include <sys/resource.h>
-#include <sys/syscall.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -49,6 +48,7 @@
 #include <bootloader_message/bootloader_message.h>
 #include <cutils/partition_utils.h>
 #include <cutils/android_reboot.h>
+#include <cutils/probe_module.h>
 #include <logwrap/logwrap.h>
 #include <private/android_filesystem_config.h>
 
@@ -68,20 +68,6 @@
 #define UNMOUNT_CHECK_TIMES 10
 
 static const int kTerminateServiceDelayMicroSeconds = 50000;
-
-static int insmod(const char *filename, const char *options) {
-    int fd = open(filename, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
-    if (fd == -1) {
-        ERROR("insmod: open(\"%s\") failed: %s", filename, strerror(errno));
-        return -1;
-    }
-    int rc = syscall(__NR_finit_module, fd, options, 0);
-    if (rc == -1) {
-        ERROR("finit_module for \"%s\" failed: %s", filename, strerror(errno));
-    }
-    close(fd);
-    return rc;
-}
 
 static int __ifupdown(const char *interface, int up) {
     struct ifreq ifr;
