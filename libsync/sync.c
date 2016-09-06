@@ -16,6 +16,7 @@
  *  limitations under the License.
  */
 
+#include <errno.h>
 #include <fcntl.h>
 #include <malloc.h>
 #include <stdint.h>
@@ -31,21 +32,36 @@
 int sync_wait(int fd, int timeout)
 {
     struct pollfd fds;
+    int polled, ret = 0;
+
+    if (fd < 0) {
+        errno = EINVAL;
+        return -1;
+    }
 
     fds.fd = fd;
-    fds.events = POLLIN | timeout;
+    fds.events = POLLIN;
 
-    //return poll(&fds, 1, timeout);
-    return 0;
+    errno = 0;
+    polled = poll(&fds, 1, timeout);
+    if (!polled) {
+        errno = ETIME;
+        ret = -1;
+    } else if (polled < 0) {
+        ret = polled;
+    }
+
+    return ret;
 }
 
 int sync_merge(const char *name, int fd1, int fd2)
 {
     struct sync_merge_data data;
     int err;
-    //memset(&data, 0, sizeof(data));
 
     data.fd2 = fd2;
+    data.pad = 0;
+    data.flags = 0;
     strlcpy(data.name, name, sizeof(data.name));
 
     err = ioctl(fd1, SYNC_IOC_MERGE, &data);
