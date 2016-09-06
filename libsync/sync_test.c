@@ -35,7 +35,7 @@ struct sync_thread_data {
 void *sync_thread(void *data)
 {
     struct sync_thread_data *sync_data = data;
-    struct sync_fence_info_data *info;
+    struct sync_file_info *info;
     int err;
     int i;
 
@@ -49,8 +49,8 @@ void *sync_thread(void *data)
         } else {
             printf("thread %d wait %d done\n", sync_data->thread_no, i);
         }
-        info = sync_fence_info(sync_data->fd[i]);
-        if (info) {
+        info = sync_file_info(sync_data->fd[i]);
+        /* if (info) {
             struct sync_pt_info *pt_info = NULL;
             printf("  fence %s %d\n", info->name, info->status);
 
@@ -65,8 +65,8 @@ void *sync_thread(void *data)
                 else
                     printf("\n");
             }
-            sync_fence_info_free(info);
-        }
+            sync_file_info_free(info);
+        }*/
         pthread_mutex_unlock(&printf_mutex);
     }
 

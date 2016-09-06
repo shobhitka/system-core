@@ -25,29 +25,31 @@
 __BEGIN_DECLS
 
 // XXX: These structs are copied from the header "linux/sync.h".
-struct sync_fence_info_data {
- uint32_t len;
+
+struct sync_file_info {
  char name[32];
- int32_t status;
- uint8_t pt_info[0];
+ uint32_t status;
+ uint32_t flags;
+ uint32_t num_fences;
+ uint32_t pad;
+
+ intptr_t sync_fence_info;
 };
 
-struct sync_pt_info {
- uint32_t len;
+struct sync_fence_info {
  char obj_name[32];
  char driver_name[32];
- int32_t status;
+ uint32_t status;
+ uint32_t flags;
  uint64_t timestamp_ns;
- uint8_t driver_data[0];
 };
 
 /* timeout in msecs */
 int sync_wait(int fd, int timeout);
 int sync_merge(const char *name, int fd1, int fd2);
-struct sync_fence_info_data *sync_fence_info(int fd);
-struct sync_pt_info *sync_pt_info(struct sync_fence_info_data *info,
-                                  struct sync_pt_info *itr);
-void sync_fence_info_free(struct sync_fence_info_data *info);
+struct sync_file_info *sync_file_info(int fd);
+void sync_file_info_free(struct sync_file_info *info);
+uint64_t sync_fence_timestamp(struct sync_file_info *info);
 
 __END_DECLS
 

@@ -20,7 +20,7 @@
 #include <malloc.h>
 #include <stdint.h>
 #include <string.h>
-
+#include <poll.h>
 #include <linux/sync.h>
 #include <linux/sw_sync.h>
 
@@ -30,15 +30,20 @@
 
 int sync_wait(int fd, int timeout)
 {
-    __s32 to = timeout;
+    struct pollfd fds;
 
-    return ioctl(fd, SYNC_IOC_WAIT, &to);
+    fds.fd = fd;
+    fds.events = POLLIN | timeout;
+
+    //return poll(&fds, 1, timeout);
+    return 0;
 }
 
 int sync_merge(const char *name, int fd1, int fd2)
 {
     struct sync_merge_data data;
     int err;
+    //memset(&data, 0, sizeof(data));
 
     data.fd2 = fd2;
     strlcpy(data.name, name, sizeof(data.name));
@@ -50,44 +55,67 @@ int sync_merge(const char *name, int fd1, int fd2)
     return data.fence;
 }
 
-struct sync_fence_info_data *sync_fence_info(int fd)
+struct sync_file_info *sync_file_info(int fd)
 {
-    struct sync_fence_info_data *info;
-    int err;
+    struct sync_file_info *info;
+    struct sync_fence_info *fence_info;
+    int err, num_fences;
 
-    info = malloc(4096);
+    info = calloc(1, sizeof(*info));
     if (info == NULL)
         return NULL;
 
-    info->len = 4096;
-    err = ioctl(fd, SYNC_IOC_FENCE_INFO, info);
+    err = ioctl(fd, SYNC_IOC_FILE_INFO, info);
     if (err < 0) {
         free(info);
         return NULL;
     }
 
+    num_fences = info->num_fences;
+
+    if (num_fences) {
+        info->flags = 0;
+        info->num_fences = num_fences;
+
+        fence_info = calloc(num_fences, sizeof(*fence_info));
+        if (!fence_info) {
+            free(info);
+            return NULL;
+        }
+
+        info->sync_fence_info = (uint64_t)(unsigned long) (fence_info);
+
+        err = ioctl(fd, SYNC_IOC_FILE_INFO, info);
+        if (err < 0) {
+            free(fence_info);
+            free(info);
+            return NULL;
+        }
+    }
+
     return info;
 }
 
-struct sync_pt_info *sync_pt_info(struct sync_fence_info_data *info,
-                                  struct sync_pt_info *itr)
+void sync_file_info_free(struct sync_file_info *info)
 {
-    if (itr == NULL)
-        itr = (struct sync_pt_info *) info->pt_info;
-    else
-        itr = (struct sync_pt_info *) ((__u8 *)itr + itr->len);
-
-    if ((__u8 *)itr - (__u8 *)info >= (int)info->len)
-        return NULL;
-
-    return itr;
-}
-
-void sync_fence_info_free(struct sync_fence_info_data *info)
-{
+    free((void *)(uintptr_t)info->sync_fence_info);
     free(info);
 }
 
+uint64_t sync_fence_timestamp(struct sync_file_info *info)
+{
+    uint64_t timestamp = 0;
+    uint32_t i;
+    intptr_t temp = ( intptr_t )info->sync_fence_info;
+    struct sync_fence_info * fence_info = (struct sync_fence_info *)temp;
+    for (i = 0 ; i < info->num_fences ; i++) {
+        if (fence_info[i].timestamp_ns > timestamp) {
+            timestamp = fence_info[i].timestamp_ns;
+        }
+    }
+
+    return timestamp;
+}
 
 int sw_sync_timeline_create(void)
 {
@@ -96,8 +124,7 @@ int sw_sync_timeline_create(void)
 
 int sw_sync_timeline_inc(int fd, unsigned count)
 {
-    __u32 arg = count;
-
+    uint32_t arg = count;
     return ioctl(fd, SW_SYNC_IOC_INC, &arg);
 }
 

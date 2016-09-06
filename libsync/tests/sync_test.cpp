@@ -172,9 +172,10 @@ public:
         return sync_wait(m_fd, timeout);
     }
     vector<SyncPointInfo> getInfo() const {
-        struct sync_pt_info *pointInfo = nullptr;
         vector<SyncPointInfo> fenceInfo;
-        sync_fence_info_data *info = sync_fence_info(getFd());
+        /*  struct sync_pt_info *pointInfo = nullptr;
+        vector<SyncPointInfo> fenceInfo;
+        sync_file_info *info = sync_file_info(getFd());
         if (!info) {
             return fenceInfo;
         }
@@ -185,7 +186,7 @@ public:
                 pointInfo->timestamp_ns,
                 pointInfo->status});
         }
-        sync_fence_info_free(info);
+        sync_file_info_free(info);*/
         return fenceInfo;
     }
     int getSize() const {
