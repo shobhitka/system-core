@@ -27,7 +27,7 @@
 #define LOG_TAG "ProbeModule"
 #include <cutils/log.h>
 
-#define LDM_DEFAULT_MOD_PATH "/system/lib/modules/"
+#define LDM_DEFAULT_MOD_PATH "/vendor/lib/modules/"
 
 extern int delete_module(const char *, unsigned int);
 
