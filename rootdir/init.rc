@@ -239,6 +239,9 @@ on init
     # set RLIMIT_NICE to allow priorities from 19 to -20
     setrlimit 13 40 40
 
+    rm /dev/.coldboot_done
+    restart ueventd
+
 # Healthd can trigger a full boot from charger mode by signaling this
 # property when the power button is held.
 on property:sys.boot_from_charger_mode=1
