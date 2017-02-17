@@ -36,15 +36,14 @@ extern int delete_module(const char *, unsigned int);
  */
 char *get_default_mod_path(char *def_mod_path)
 {
-    int len;
     struct utsname buf;
     uname(&buf);
-    len = snprintf(def_mod_path, PATH_MAX, "%s", LDM_DEFAULT_MOD_PATH);
-    strcpy(def_mod_path + len, buf.release);
+    snprintf(def_mod_path, PATH_MAX, "%s/%s", LDM_DEFAULT_MOD_PATH, buf.release);
     if (access(def_mod_path, F_OK))
-        def_mod_path[len] = '\0';
+        snprintf(def_mod_path, PATH_MAX, "%s/", LDM_DEFAULT_MOD_PATH);
     else
         strcat(def_mod_path, "/");
+
     return def_mod_path;
 }
 
